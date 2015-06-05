@@ -4,49 +4,67 @@ using NUnit.Framework;
 
 namespace Nest.Tests.Unit.Search.Aggregations.Terms
 {
-	[TestFixture]
-	public class TermsAggregationTests : BaseJsonTests
-	{
-		[Test]
-		public void TermsAggregationSerializes()
-		{
-			var s = new TermsAggregationDescriptor<ElasticsearchProject>()
-				.CollectMode(TermsAggregationCollectMode.BreadthFirst)
-				.ExecutionHint(TermsAggregationExecutionHint.GlobalOrdinalsLowCardinality)
-				.Field(p => p.Country)
-				.MinimumDocumentCount(1)
-				.OrderAscending("_count");
+    [TestFixture]
+    public class TermsAggregationTests : BaseJsonTests
+    {
+        [Test]
+        public void TermsAggregationSerializes()
+        {
+            var s = new TermsAggregationDescriptor<ElasticsearchProject>()
+                .CollectMode(TermsAggregationCollectMode.BreadthFirst)
+                .ExecutionHint(TermsAggregationExecutionHint.GlobalOrdinalsLowCardinality)
+                .Field(p => p.Country)
+                .MinimumDocumentCount(1)
+                .OrderAscending("_count");
 
-			this.JsonEquals(s, MethodBase.GetCurrentMethod());
-		}
+            this.JsonEquals(s, MethodBase.GetCurrentMethod());
+        }
 
-		[Test]
-		public void TermsAggregation_IncludeExclude_Array_Serializes()
-		{
-			var s = new TermsAggregationDescriptor<ElasticsearchProject>()
-				.Field(p => p.Name)
-				.Include(new[] { "value1", "value2" })
-				.Exclude(new[] { "value3" });
+        [Test]
+        public void TermsAggregation_IncludeExclude_Array_Serializes()
+        {
+            var s = new TermsAggregationDescriptor<ElasticsearchProject>()
+                .Field(p => p.Name)
+                .Include(new[] { "value1", "value2" })
+                .Exclude(new[] { "value3" });
 
-			var expected = @"{
+            var expected = @"{
 				field: ""name"",
 				include: [ ""value1"", ""value2"" ],
 				exclude: [ ""value3"" ]
 			}";
 
-			var actual = TestElasticClient.Serialize(s);
-			Assert.True(actual.JsonEquals(expected));
-		}
+            var actual = TestElasticClient.Serialize(s);
+            Assert.True(actual.JsonEquals(expected));
+        }
 
-		[Test]
-		public void TermsAggregation_IncludeExclude_Pattern_Serializes()
-		{
-			var s = new TermsAggregationDescriptor<ElasticsearchProject>()
-				.Field(p => p.Name)
-				.Include("elastic*", "CANON_EQ|CASE_INSENSITIVE")
-				.Exclude("nest*");
+        [Test]
+        public void TermsAggregation_IncludeExclude_Array_Serializes_ExactValue()
+        {
+            var s = new TermsAggregationDescriptor<ElasticsearchProject>()
+                .Field(p => p.Name)
+                .Include(new object[] { 1, 2 })
+                .Exclude(new object[] { 3 });
 
-			var expected = @"{
+            var expected = @"{
+				field: ""name"",
+				include: [ 1, 2 ],
+				exclude: [ 3 ]
+			}";
+
+            var actual = TestElasticClient.Serialize(s);
+            Assert.True(actual.JsonEquals(expected));
+        }
+
+        [Test]
+        public void TermsAggregation_IncludeExclude_Pattern_Serializes()
+        {
+            var s = new TermsAggregationDescriptor<ElasticsearchProject>()
+                .Field(p => p.Name)
+                .Include("elastic*", "CANON_EQ|CASE_INSENSITIVE")
+                .Exclude("nest*");
+
+            var expected = @"{
 				field: ""name"",
 				include: {
 					pattern: ""elastic*"",
@@ -57,8 +75,8 @@ namespace Nest.Tests.Unit.Search.Aggregations.Terms
 				}
 			}";
 
-			var actual = TestElasticClient.Serialize(s);
-			Assert.True(actual.JsonEquals(expected));
-		}
-	}
+            var actual = TestElasticClient.Serialize(s);
+            Assert.True(actual.JsonEquals(expected));
+        }
+    }
 }
